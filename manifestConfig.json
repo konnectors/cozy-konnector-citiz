@@ -1,0 +1,66 @@
+[
+  {
+    "name": "Alpes Loire",
+    "value": "1"
+  },
+  {
+    "name": "Angers",
+    "value": "2"
+  },
+  {
+    "name": "Auto en Velay",
+    "value": "3"
+  },
+  {
+    "name": "Bordeaux",
+    "value": "4"
+  },
+  {
+    "name": "Bourgogne Franche Comté",
+    "value": "5"
+  },
+  {
+    "name": "Grand Est",
+    "value": "6"
+  },
+  {
+    "name": "Ile de France",
+    "value": "7"
+  },
+  {
+    "name": "Lille-Arras",
+    "value": "8"
+  },
+  {
+    "name": "LPA - Grand Lyon",
+    "value": "9"
+  },
+  {
+    "name": "Nantes",
+    "value": "10"
+  },
+  {
+    "name": "Poitiers (Otolis)",
+    "value": "11"
+  },
+  {
+    "name": "Provence",
+    "value": "12"
+  },
+  {
+    "name": "Rennes Métropole",
+    "value": "13"
+  },
+  {
+    "name": "Toulouse",
+    "value": "14"
+  },
+  {
+    "name": "Tours",
+    "value": "15"
+  },
+  {
+    "name": "Yélomobile - La Rochelle",
+    "value": "16"
+  }
+]

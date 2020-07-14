@@ -6,32 +6,22 @@ const {
   utils
 } = require('cozy-konnector-libs')
 const request = requestFactory({
-  // The debug mode shows all the details about HTTP requests and responses. Very useful for
-  // debugging but very verbose. This is why it is commented out by default
-  // debug: true,
-  // Activates [cheerio](https://cheerio.js.org/) parsing on each page
-  cheerio: true,
-  // If cheerio is activated do not forget to deactivate json parsing (which is activated by
-  // default in cozy-konnector-libs
-  json: false,
-  // This allows request-promise to keep cookies between requests
+  json: true,
   jar: true
 })
+const providers = require('../providers.json')
 
-const VENDOR = 'template'
-const baseUrl = 'http://books.toscrape.com'
+const VENDOR = 'citiz'
+const baseUrl = 'https://service.citiz.fr/citiz/api/customer'
 
 module.exports = new BaseKonnector(start)
 
-// The start function is run by the BaseKonnector instance only when it got all the account
-// information (fields). When you run this connector yourself in "standalone" mode or "dev" mode,
-// the account information come from ./konnector-dev-config.json file
-// cozyParameters are static parameters, independents from the account. Most often, it can be a
-// secret api key.
-async function start(fields, cozyParameters) {
+async function start(fields) {
+  const { login, password } = fields
+  const { providerId } = providers[fields.providerId]
+
   log('info', 'Authenticating ...')
-  if (cozyParameters) log('debug', 'Found COZY_PARAMETERS')
-  await authenticate.bind(this)(fields.login, fields.password)
+  await authenticate.bind(this)(login, password, providerId)
   log('info', 'Successfully logged in')
   // The BaseKonnector instance expects a Promise as return of the function
   log('info', 'Fetching the list of documents')
@@ -51,31 +41,21 @@ async function start(fields, cozyParameters) {
   })
 }
 
-// This shows authentication using the [signin function](https://github.com/konnectors/libs/blob/master/packages/cozy-konnector-libs/docs/api.md#module_signin)
-// even if this in another domain here, but it works as an example
-function authenticate(username, password) {
-  return this.signin({
-    url: `http://quotes.toscrape.com/login`,
-    formSelector: 'form',
-    formData: { username, password },
-    // The validate function will check if the login request was a success. Every website has a
-    // different way to respond: HTTP status code, error message in HTML ($), HTTP redirection
-    // (fullResponse.request.uri.href)...
-    validate: (statusCode, $, fullResponse) => {
-      log(
-        'debug',
-        fullResponse.request.uri.href,
-        'not used here but should be useful for other connectors'
-      )
-      // The login in toscrape.com always works except when no password is set
-      if ($(`a[href='/logout']`).length === 1) {
-        return true
-      } else {
-        // cozy-konnector-libs has its own logging function which format these logs with colors in
-        // standalone and dev mode and as JSON in production mode
-        log('error', $('.error').text())
-        return false
-      }
+function authenticate(username, password, providerId) {
+  return request({
+    uri: `${baseUrl}/login`,
+    method: 'POST',
+    body: {
+      username,
+      password,
+      providerId
+    }
+  }).then(resp => {
+    if (resp.errorMessage) {
+      log('error', resp.errorMessage)
+      return false
+    } else {
+      return true
     }
   })
 }

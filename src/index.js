@@ -1,7 +1,6 @@
 const {
   BaseKonnector,
   requestFactory,
-  scrape,
   log,
   utils
 } = require('cozy-konnector-libs')
@@ -19,25 +18,47 @@ module.exports = new BaseKonnector(start)
 async function start(fields) {
   const { login, password } = fields
   const { providerId } = providers[fields.providerId]
+  const ctx = { providerId }
 
   log('info', 'Authenticating ...')
   await authenticate.bind(this)(login, password, providerId)
   log('info', 'Successfully logged in')
-  // The BaseKonnector instance expects a Promise as return of the function
-  log('info', 'Fetching the list of documents')
-  const $ = await request(`${baseUrl}/index.html`)
-  // cheerio (https://cheerio.js.org/) uses the same api as jQuery (http://jquery.com/)
-  log('info', 'Parsing list of documents')
-  const documents = await parseDocuments($)
 
-  // Here we use the saveBills function even if what we fetch are not bills,
-  // but this is the most common case in connectors
+  log('info', 'Authorizing the current user')
+  const { access_token, token_type } = await request({
+    uri: 'https://service.citiz.fr/citiz/authentication',
+    method: 'POST',
+    form: {
+      userName: 'mobile.worker.5',
+      password: 'Mo83Wo76!',
+      grant_type: 'password'
+    }
+  })
+  const Authorization = `${token_type} ${access_token}`
+
+  log('info', 'Fetching the user info')
+  const usersSettings = await request({
+    uri: `${baseUrl}/${login}/settings`,
+    headers: { Authorization }
+  })
+  if (!usersSettings.results || !usersSettings.results.length) {
+    log('error', usersSettings)
+  }
+  // We take the first user but this could be different for other people.
+  // To be updated.
+  const userSettings = usersSettings.results[0]
+  ctx.token = userSettings.token
+  ctx.customerId = userSettings.customerId
+
+  log('info', 'Fetching the list of invoices')
+  const invoices = await fetchInvoices(ctx)
+
+  log('info', 'Parsing list of invoices')
+  const documents = await parseInvoices(ctx, invoices)
+
   log('info', 'Saving data to Cozy')
   await this.saveBills(documents, fields, {
-    // This is a bank identifier which will be used to link bills to bank operations. These
-    // identifiers should be at least a word found in the title of a bank operation related to this
-    // bill. It is not case sensitive.
-    identifiers: ['books']
+    identifiers: ['autopartage']
   })
 }
 
@@ -60,45 +81,53 @@ function authenticate(username, password, providerId) {
   })
 }
 
-// The goal of this function is to parse a HTML page wrapped by a cheerio instance
-// and return an array of JS objects which will be saved to the cozy by saveBills
-// (https://github.com/konnectors/libs/blob/master/packages/cozy-konnector-libs/docs/api.md#savebills)
-function parseDocuments($) {
-  // You can find documentation about the scrape function here:
-  // https://github.com/konnectors/libs/blob/master/packages/cozy-konnector-libs/docs/api.md#scrape
-  const docs = scrape(
-    $,
-    {
-      title: {
-        sel: 'h3 a',
-        attr: 'title'
-      },
-      amount: {
-        sel: '.price_color',
-        parse: normalizePrice
-      },
-      fileurl: {
-        sel: 'img',
-        attr: 'src',
-        parse: src => `${baseUrl}/${src}`
-      }
-    },
-    'article'
+async function fetchInvoices({ providerId, customerId, token }) {
+  return (
+    (await request({
+      uri: `${baseUrl}/${customerId}/invoices`,
+      qs: { token, providerId }
+    }))
+      // Citiz invoices per month and closes it at the end so we fetch only these
+      .filter(invoice => invoice.closed)
+      .sort((a, b) => {
+        // We sort by ascending invoice date so that credit earned can be applied
+        // to later bills.
+        if (a.invoiceDate < b.invoiceDate) return -1
+        if (b.invoiceDate < a.invoiceDate) return 1
+        return 0
+      })
   )
-  return docs.map(doc => ({
-    ...doc,
-    // The saveBills function needs a date field
-    // even if it is a little artificial here (these are not real bills)
-    date: new Date(),
-    currency: 'EUR',
-    filename: `${utils.formatDate(new Date())}_${VENDOR}_${doc.amount.toFixed(
-      2
-    )}EUR${doc.vendorRef ? '_' + doc.vendorRef : ''}.jpg`,
-    vendor: VENDOR
-  }))
 }
 
-// Convert a price string to a float
-function normalizePrice(price) {
-  return parseFloat(price.replace('£', '').trim())
+function parseInvoices(ctx, invoices) {
+  const { providerId, customerId, token } = ctx
+  ctx.credit = 0
+  return invoices.map(
+    ({ period, invoicedAmount, invoiceId, invoiceNo, invoiceDate }) => {
+      return {
+        title: period,
+        amount: computeAmount(ctx, invoicedAmount),
+        fileurl: `${baseUrl}/${customerId}/invoices/${invoiceId}`,
+        requestOptions: { qs: { token, providerId } },
+        date: new Date(`${invoiceDate}Z`),
+        currency: 'EUR',
+        filename: `${utils.formatDate(
+          new Date(`${invoiceDate}Z`)
+        )}_${VENDOR}_${invoicedAmount.toFixed(2)}EUR_${invoiceNo}.pdf`,
+        vendor: VENDOR
+      }
+    }
+  )
+}
+
+function computeAmount(ctx, invoicedAmount) {
+  // Apply earned credit to invoiced amount
+  const diff = invoicedAmount - ctx.credit
+  // We save the new credit value to either 0 or the remaining credit if it was
+  // greater than the invoiced amount.
+  ctx.credit = Math.max(-diff, 0)
+
+  // If the credit covers the entire invoiced amount, there won't be any debit
+  // operations so the amount is 0.
+  return Math.max(diff, 0)
 }

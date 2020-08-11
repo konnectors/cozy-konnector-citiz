@@ -4,8 +4,7 @@ node_js:
 env:
   global:
   - MATTERMOST_CHANNEL=publication
-  # Token to access Cozy Registry, you should replace it with a token specific to this konnector
-  - secure: CQ44ZVjPAIVRvGgMcduSAX4VmaOrzF3nrJXPFUsNQ2tMVVdaAlI1zTNkdfntqigZgz6Mpk9x+2FcA8qrkNzQ4cW0lPP9f5dBtSH1xetfpXDFKprW4bqzmhgXSXJFTOYxkChOBPmCYJr+Vv4XqDkv/dBEPdfRSgvVyd5YxHSd5HBU91rKyR+Hox7LTnhmlXleLIs11EQgp7RK+L28MBCtCqAa2niFlKKRlqupm2FSpZzxCh9qeY0wKCQzPE+QZUm4waJ1SUGKQwbzAfyOxu2O6rwzaTSknfdJoSX6AMxjRTWBC9c3VfUGM3wjVJIqMhiUj2FQhVIjiDyX/W60/q3UMC5WYzSvEDDfhnKCPwiUKSU7HvSxx9q2YP34evxKo7KPahz9zLlQZvW+GBMyI9hbMDBTALuQVVzhftsvqfrogyYhkEPviiYiVADWNxhacsbUjRA5svXnZvtmCPo7fLFwel/krgC5Z8AwAY0YxWjSHNVScUkieSDCrlxrC09vTtG60unt9gtXbD5ruUkDLWSUwHBv2p0WY1TdP+2Vlf3yYfBvEVbqi59AxG+T17bq7Xv3QZnkrwC+UOCNCeg+gHPv+fRpUaYWzCO4uaoY/nlJa7RulQFhGca3A//6xRo/KgWw9JJnOXJelNjE9oHCUu9xShotUZKOF+O93V/BRqs9ITo=
+  - secure: jgETvnRvAVYBqKqtuPdS3fvnEEvYBG69FLqV6lbfCf3dDR7cKgiHarZK+R1x82EORfLa3kLWucbN/9KAwCWvIt4IHwhFo5BgnUk3aiGBiZpX+JP7UmCEJ9MTyYPFQFsq6nNfRjC95TXj3vTHiUAbyUz8JuPJJtNy/msxmXhOOjNyrldu2rFXikTfyvTaTPFsZrfyqXsIjNT7mUDMv3/bC8RMrf0KVGpskSaZFJrlBrdjjk3/KRAO+60PDVFTVcq47U17yfGWNs9SLlREY4VG6sS2PiffWCEPHoZgxKS1EdcewpCUSokFwARXbcmlOAg+SSFSLmSVwoOqkQTS9mVeVoN2y95qyVuec5hCHbriMUF+bLgPk/Kvj7pZ3UhToWUE+bzKnFxcoQjKCIN60ijtI7GCmXnCQkSCLf45CudNULALT2+oOCnpIcwvAxlSE8Sqaki/GBoTUL3DvkGW37C8S2d+KXhVun5JxBXM5eGZt8rlSwZ9+eQyyXNsy2byj2CfL+LW2pwGqibTSEaSqJqiJGXbkHlYTaYe2Nmg1XTCGQzWfFbBmmK79fTHUcLBtHoncd8pd6sYAN3hH4IxcCuSDIF38/5XBzdYN7eWbd/rB4lqR3SmV34tk5W0Fak1Zzhdp341t1TTVG2mIGkDgBYOsnikSFYq9kPdj300feJYmr4=
 cache:
   yarn: true
   directories:
@@ -30,9 +29,8 @@ deploy:
   on:
     tags: true
 before_install:
-# run the yarn travisDeployKey command to genrate this
-# - openssl aes-256-cbc -K $encrypted_0b21ecdcf920_key -iv $encrypted_0b21ecdcf920_iv
-#   -in github_deploy_key.enc -out /tmp/github_deploy_key -d
+- openssl aes-256-cbc -K $encrypted_a5810d6f2e68_key -iv $encrypted_a5810d6f2e68_iv
+  -in github_deploy_key.enc -out /tmp/github_deploy_key -d
 - eval "$(ssh-agent -s)"
 - chmod 600 /tmp/github_deploy_key
 - ssh-add /tmp/github_deploy_key

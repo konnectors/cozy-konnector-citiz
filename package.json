@@ -1,5 +1,5 @@
 {
-  "name": "cozy-konnector-template",
+  "name": "cozy-konnector-citiz",
   "version": "1.0.0",
   "description": "",
   "repository": {
@@ -7,7 +7,7 @@
     "url": "git@github.com:konnectors/citiz.git"
   },
   "keywords": [],
-  "author": "Cozy Cloud",
+  "author": "Erwan Guyader",
   "license": "AGPL-3.0",
   "main": "./src/index.js",
   "eslintConfig": {

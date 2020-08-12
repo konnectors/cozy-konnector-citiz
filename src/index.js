@@ -62,7 +62,8 @@ async function start(fields) {
 
   log('info', 'Saving data to Cozy')
   await this.saveBills(documents, fields, {
-    identifiers: ['autopartage']
+    identifiers: ['autopartage'],
+    contentType: 'application/pdf'
   })
 }
 

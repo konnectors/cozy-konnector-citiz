@@ -37,7 +37,7 @@
     "providers": "node ./src/providers.js"
   },
   "dependencies": {
-    "cozy-konnector-libs": "4.37.1"
+    "cozy-konnector-libs": "4.38.2"
   },
   "devDependencies": {
     "copy-webpack-plugin": "6.2.1",

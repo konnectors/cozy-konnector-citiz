@@ -13,9 +13,11 @@ const request = requestFactory({
   jar: true
 })
 const providers = require('../providers.json')
+let PU = 'citiz' // Provider Url
+let baseUrl = 'https://service.citiz.fr/citiz/api/customer'
 
 const VENDOR = 'citiz'
-const baseUrl = 'https://service.citiz.fr/citiz/api/customer'
+
 
 module.exports = new BaseKonnector(start)
 
@@ -23,14 +25,21 @@ async function start(fields) {
   const { login, password } = fields
   const { providerId } = providers[fields.providerId]
   const ctx = { providerId }
-
+  if (fields.providerId == 16) {
+    PU = 'yelomobile'
+    baseUrl = 'https://service.citiz.fr/yelomobile/api/customer'
+    log('info', 'Manually setting url, provider 16')
+  }
   log('info', 'Authenticating ...')
   await authenticate.bind(this)(login, password, providerId)
   log('info', 'Successfully logged in')
 
   log('info', 'Authorizing the current user')
+
+  const uri = `https://service.citiz.fr/${PU}/authentication`
+
   const { access_token, token_type } = await request({
-    uri: 'https://service.citiz.fr/citiz/authentication',
+    uri,
     method: 'POST',
     form: {
       userName: 'mobile.worker.5',

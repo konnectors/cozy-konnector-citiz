@@ -9,12 +9,12 @@ const {
   utils
 } = require('cozy-konnector-libs')
 const request = requestFactory({
+  //debug: true,
   json: true,
   jar: true
 })
 const providers = require('../providers.json')
-let PU = 'citiz' // Provider Url
-let baseUrl = 'https://service.citiz.fr/citiz/api/customer'
+const baseUrl = 'https://service.citiz.fr/citiz/api/customer'
 
 const VENDOR = 'citiz'
 
@@ -25,24 +25,21 @@ async function start(fields) {
   const { login, password } = fields
   const { providerId } = providers[fields.providerId]
   const ctx = { providerId }
-  if (fields.providerId == 16) {
-    PU = 'yelomobile'
-    baseUrl = 'https://service.citiz.fr/yelomobile/api/customer'
-    log('info', 'Manually setting url, provider 16')
-  }
+  log('debug', `Provider in account is : ${fields.providerId}`)
+
   log('info', 'Authenticating ...')
   await authenticate.bind(this)(login, password, providerId)
   log('info', 'Successfully logged in')
 
   log('info', 'Authorizing the current user')
 
-  const uri = `https://service.citiz.fr/${PU}/authentication`
+  const uri = `https://service.citiz.fr/citiz/authentication`
 
   const { access_token, token_type } = await request({
     uri,
     method: 'POST',
     form: {
-      userName: 'mobile.worker.5',
+      userName: `mobile.worker.${providerId}`,
       password: 'Mo83Wo76!',
       grant_type: 'password'
     }
